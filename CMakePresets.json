@@ -1,0 +1,65 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 22, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "gcc",
+      "displayName": "GCC 14, Debug, -Werror",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_C_COMPILER": "gcc-14", "CMAKE_CXX_COMPILER": "g++-14" }
+    },
+    {
+      "name": "clang",
+      "displayName": "Clang 18, Debug, -Werror",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_C_COMPILER": "clang-18", "CMAKE_CXX_COMPILER": "clang++-18" }
+    },
+    {
+      "name": "sanitize",
+      "displayName": "Clang 18 with ASan + UBSan",
+      "inherits": "clang",
+      "cacheVariables": { "FTAE_SANITIZE": "ON" }
+    },
+    {
+      "name": "coverage",
+      "displayName": "GCC 14 with gcov line/branch coverage",
+      "inherits": "gcc",
+      "cacheVariables": { "FTAE_COVERAGE": "ON" }
+    },
+    {
+      "name": "mcdc",
+      "displayName": "Clang 18 source-based coverage with MC/DC",
+      "inherits": "clang",
+      "cacheVariables": { "FTAE_MCDC": "ON" }
+    },
+    {
+      "name": "release",
+      "displayName": "GCC 14, Release",
+      "inherits": "gcc",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "gcc", "configurePreset": "gcc" },
+    { "name": "clang", "configurePreset": "clang" },
+    { "name": "sanitize", "configurePreset": "sanitize" },
+    { "name": "coverage", "configurePreset": "coverage" },
+    { "name": "mcdc", "configurePreset": "mcdc" },
+    { "name": "release", "configurePreset": "release" }
+  ],
+  "testPresets": [
+    { "name": "gcc", "configurePreset": "gcc", "output": { "outputOnFailure": true } },
+    { "name": "clang", "configurePreset": "clang", "output": { "outputOnFailure": true } },
+    { "name": "sanitize", "configurePreset": "sanitize", "output": { "outputOnFailure": true } },
+    { "name": "coverage", "configurePreset": "coverage", "output": { "outputOnFailure": true } },
+    { "name": "mcdc", "configurePreset": "mcdc", "output": { "outputOnFailure": true } },
+    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } }
+  ]
+}

@@ -1,0 +1,30 @@
+# Build trees
+/build/
+/build-*/
+/out/
+/firmware/rp2040/build/
+
+# Firmware dependencies fetched by tools/fetch_firmware_deps.sh
+/third_party/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Coverage and profiling by-products
+*.gcda
+*.gcno
+*.profraw
+*.profdata
+
+# Scratch output from local runs (committed results live in results/)
+/results/tmp/
+
+# Editors
+.vscode/
+.idea/
+
+# Never commit credentials
+.wokwi_token

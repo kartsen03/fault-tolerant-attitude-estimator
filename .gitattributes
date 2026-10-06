@@ -1,0 +1,5 @@
+# Keep LF line endings everywhere: the code is built in Linux containers,
+# WSL and CI, and shell scripts with CRLF fail there.
+* text=auto eol=lf
+*.png binary
+*.svg text eol=lf
