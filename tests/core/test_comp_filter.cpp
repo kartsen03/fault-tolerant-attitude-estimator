@@ -4,8 +4,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <limits>
+#include <random>
 
 #include "att/comp_filter.h"
 #include "imu_kinematics.hpp"
@@ -43,6 +46,29 @@ att_euler_t Estimate(const att_cf_t &cf)
 att_vec3_t Vec(double x, double y, double z)
 {
     return att_vec3_t{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)};
+}
+
+// Gaussian samples from mt19937 via Box-Muller. std::normal_distribution is
+// implementation-defined, so it would give different numbers on libstdc++
+// and libc++; mt19937 itself is fully specified.
+class Gaussian {
+public:
+    explicit Gaussian(uint32_t seed) : rng_(seed) {}
+    double next()
+    {
+        const double u1 = (static_cast<double>(rng_()) + 1.0) / 4294967297.0;  // (0, 1)
+        const double u2 = static_cast<double>(rng_()) / 4294967296.0;          // [0, 1)
+        return std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * ftae_test::kPi * u2);
+    }
+
+private:
+    std::mt19937 rng_;
+};
+
+double StdDev(double sum, double sum_sq, int n)
+{
+    const double mean = sum / n;
+    return std::sqrt(sum_sq / n - mean * mean);
 }
 
 }  // namespace
@@ -85,6 +111,66 @@ TEST(Req003StaticTilt, StepErrorDecaysWithTimeConstantTau)
     const double k = static_cast<double>(kDt) / (static_cast<double>(kTau) + kDt);
     EXPECT_NEAR(remaining, std::pow(1.0 - k, n), 1e-4);  // exact discrete law
     EXPECT_NEAR(remaining, std::exp(-1.0), 0.01);         // ~e^-1 after one tau
+}
+
+TEST(Req003NoiseTradeoff, AccelNoiseShrinksAndGyroNoiseGrowsWithTau)
+{
+    // White noise on the accelerometer tilt is low-pass filtered:
+    //   sigma_out / sigma_tilt = sqrt(k / (2 - k)),         k = dt / (tau + dt)
+    // White noise on the gyro rate is integrated, then reined in by the
+    // accelerometer:
+    //   sigma_out / sigma_rate = dt (1 - k) / sqrt(k (2 - k))   [seconds]
+    // A larger tau suppresses accelerometer noise but lets more gyro error
+    // through (and the bias offset b*tau grows linearly; see Req005).
+    const double sigma_tilt = deg(1.0);
+    const double sigma_rate = deg(1.0);
+    const int n = 400000;
+    const int skip = 2000;
+    const att_vec3_t level = accel_at_rest(0.0, 0.0);
+
+    for (const float tau : {0.1f, 0.5f, 2.0f}) {
+        const double k = static_cast<double>(kDt) / (static_cast<double>(tau) + kDt);
+
+        att_cf_t acc_cf = MakeFilter(tau);
+        ASSERT_EQ(att_cf_seed(&acc_cf, &level), ATT_OK);
+        Gaussian acc_noise(1234u);
+        double s = 0.0;
+        double s2 = 0.0;
+        for (int i = 0; i < n; ++i) {
+            const att_vec3_t a = accel_at_rest(sigma_tilt * acc_noise.next(), 0.0);
+            ASSERT_EQ(att_cf_update(&acc_cf, &kZeroRate, &a, kDt), ATT_OK);
+            if (i >= skip) {
+                const double r = acc_cf.est.roll_rad;
+                s += r;
+                s2 += r * r;
+            }
+        }
+        const double acc_gain = StdDev(s, s2, n - skip) / sigma_tilt;
+        const double acc_theory = std::sqrt(k / (2.0 - k));
+        EXPECT_NEAR(acc_gain, acc_theory, 0.1 * acc_theory) << "tau=" << tau;
+
+        att_cf_t gyr_cf = MakeFilter(tau);
+        ASSERT_EQ(att_cf_seed(&gyr_cf, &level), ATT_OK);
+        Gaussian gyr_noise(5678u);
+        s = 0.0;
+        s2 = 0.0;
+        for (int i = 0; i < n; ++i) {
+            const att_vec3_t w = Vec(sigma_rate * gyr_noise.next(), 0.0, 0.0);
+            ASSERT_EQ(att_cf_update(&gyr_cf, &w, &level, kDt), ATT_OK);
+            if (i >= skip) {
+                const double r = gyr_cf.est.roll_rad;
+                s += r;
+                s2 += r * r;
+            }
+        }
+        const double gyr_gain = StdDev(s, s2, n - skip) / sigma_rate;
+        const double gyr_theory = kDt * (1.0 - k) / std::sqrt(k * (2.0 - k));
+        EXPECT_NEAR(gyr_gain, gyr_theory, 0.1 * gyr_theory) << "tau=" << tau;
+
+        std::printf("[tau-tradeoff] tau=%.1f s  accel-noise gain %.4f (theory %.4f)  "
+                    "gyro-noise gain %.4f s (theory %.4f)\n",
+                    static_cast<double>(tau), acc_gain, acc_theory, gyr_gain, gyr_theory);
+    }
 }
 
 // ---------------------------------------------------------------------------
