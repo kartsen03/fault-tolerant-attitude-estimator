@@ -25,3 +25,10 @@ target_include_directories(ftae_unit_tests PRIVATE
 target_link_libraries(ftae_unit_tests PRIVATE att_drivers att_core GTest::gtest_main)
 target_compile_options(ftae_unit_tests PRIVATE -Wall -Wextra -Werror)
 gtest_discover_tests(ftae_unit_tests DISCOVERY_TIMEOUT 30)
+
+# Integration tests: application + driver + core on the host simulator HAL.
+add_executable(ftae_integration_tests
+  app/test_app.cpp)
+target_link_libraries(ftae_integration_tests PRIVATE att_app att_hal_host GTest::gtest_main)
+target_compile_options(ftae_integration_tests PRIVATE -Wall -Wextra -Werror)
+gtest_discover_tests(ftae_integration_tests DISCOVERY_TIMEOUT 30)

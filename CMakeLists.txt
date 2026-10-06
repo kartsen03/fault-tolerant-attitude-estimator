@@ -21,6 +21,7 @@ include(cmake/FtaeInstrumentation.cmake)
 add_subdirectory(core)
 add_subdirectory(hal)
 add_subdirectory(drivers)
+add_subdirectory(firmware/app)
 
 if(FTAE_BUILD_TESTS)
   enable_testing()
