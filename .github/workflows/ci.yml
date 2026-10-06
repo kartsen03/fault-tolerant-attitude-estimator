@@ -27,3 +27,35 @@ jobs:
         run: cmake --build --preset ${{ matrix.preset }}
       - name: Test
         run: ctest --preset ${{ matrix.preset }}
+
+  firmware:
+    name: Firmware build (RP2040, Pico SDK 2.3.1, FreeRTOS V11.3.1)
+    runs-on: ubuntu-24.04
+    container: ubuntu:24.04
+    steps:
+      - name: Install the Arm toolchain
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git cmake ninja-build python3 build-essential \
+            gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+          git config --global --add safe.directory '*'
+      - uses: actions/checkout@v7
+      - name: Cache Pico SDK and FreeRTOS-Kernel
+        uses: actions/cache@v6
+        with:
+          path: third_party
+          key: fw-deps-${{ hashFiles('tools/fetch_firmware_deps.sh') }}
+      - name: Fetch pinned firmware dependencies
+        run: bash tools/fetch_firmware_deps.sh
+      - name: Compile firmware (compile-only, warnings are errors)
+        run: bash tools/build_firmware.sh
+      - name: Check that no heap allocator is linked
+        run: bash tools/check_no_heap.sh build/rp2040/ftae_fw.elf
+      - uses: actions/upload-artifact@v7
+        with:
+          name: firmware-rp2040
+          path: |
+            build/rp2040/ftae_fw.elf
+            build/rp2040/ftae_fw.uf2
+            build/rp2040/ftae_fw.elf.map
