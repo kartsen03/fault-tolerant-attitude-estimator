@@ -15,6 +15,7 @@ include(GoogleTest)
 add_executable(ftae_unit_tests
   core/test_att_math.cpp
   core/test_comp_filter.cpp
+  core/test_estimator.cpp
   drivers/test_mpu6050.cpp
   mocks/hal_mock.cpp)
 target_include_directories(ftae_unit_tests PRIVATE

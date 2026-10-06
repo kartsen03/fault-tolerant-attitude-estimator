@@ -3,7 +3,8 @@
 
 add_library(att_core STATIC
   src/att_math.c
-  src/comp_filter.c)
+  src/comp_filter.c
+  src/estimator.c)
 
 target_include_directories(att_core
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
