@@ -19,6 +19,7 @@ include(cmake/FtaeWarnings.cmake)
 include(cmake/FtaeInstrumentation.cmake)
 
 add_subdirectory(core)
+add_subdirectory(hal)
 
 if(FTAE_BUILD_TESTS)
   enable_testing()
