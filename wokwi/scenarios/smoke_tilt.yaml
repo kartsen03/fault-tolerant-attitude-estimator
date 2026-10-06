@@ -1,0 +1,38 @@
+# Boot, level, then roll 30 deg and pitch -20 deg via the simulated MPU6050.
+# Wokwi's accelerometer controls are in g; at rest the sensor reads
+# g * (-sin(pitch), sin(roll) cos(pitch), cos(roll) cos(pitch)).
+name: Smoke test - boot, level, roll 30, pitch -20
+version: 1
+author: Karthik Sengupta
+
+steps:
+  - wait-serial: 'MPU6050 init status 0'
+  - wait-serial: '0.00,0.00,1,NOM,OK,0000'
+
+  # roll = 30 deg: accelY = sin 30, accelZ = cos 30
+  - set-control:
+      part-id: imu1
+      control: accelY
+      value: 0.5
+  - set-control:
+      part-id: imu1
+      control: accelZ
+      value: 0.8660254
+  - delay: 5000ms
+  - wait-serial: ',30.00,0.00,1,NOM,OK,0000'
+
+  # pitch = -20 deg: accelX = -sin(-20), accelZ = cos 20
+  - set-control:
+      part-id: imu1
+      control: accelY
+      value: 0
+  - set-control:
+      part-id: imu1
+      control: accelX
+      value: 0.3420201
+  - set-control:
+      part-id: imu1
+      control: accelZ
+      value: 0.9396926
+  - delay: 5000ms
+  - wait-serial: ',0.00,-20.00,1,NOM,OK,0000'

@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "author": "Karthik Sengupta",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-pi-pico", "id": "pico", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-mpu6050",
+      "id": "imu1",
+      "top": 20,
+      "left": 180,
+      "attrs": { "accelX": "0", "accelY": "0", "accelZ": "1", "temperature": "24" }
+    }
+  ],
+  "connections": [
+    [ "pico:GP0", "$serialMonitor:RX", "", [] ],
+    [ "pico:GP1", "$serialMonitor:TX", "", [] ],
+    [ "imu1:VCC", "pico:3V3", "red", [] ],
+    [ "imu1:GND", "pico:GND.8", "black", [] ],
+    [ "imu1:SDA", "pico:GP4", "green", [] ],
+    [ "imu1:SCL", "pico:GP5", "blue", [] ]
+  ],
+  "dependencies": {}
+}

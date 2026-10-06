@@ -1,0 +1,7 @@
+# Wokwi project: simulated Raspberry Pi Pico (RP2040) with an MPU6050 on
+# I2C0 (GP4/GP5), running the same firmware image that would be flashed to
+# a real board. Build it first with tools/build_firmware.sh.
+[wokwi]
+version = 1
+firmware = "../build/rp2040/ftae_fw.uf2"
+elf = "../build/rp2040/ftae_fw.elf"
